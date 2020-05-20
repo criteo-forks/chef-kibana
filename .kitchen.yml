@@ -22,7 +22,7 @@ platforms:
         mirrorlist: http://mirrors.fedoraproject.org/metalink?repo=epel-6&arch=$basearch
         gpgkey: http://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6
         sslverify: false
-- name: centos-7.4.1708
+- name: centos-7
 
 verifier:
   name: inspec
@@ -143,6 +143,24 @@ suites:
     kibana:
       install_method: 'package'
       version: 5
+      base_dir: '/usr/share/kibana/'
+      interface: '0.0.0.0'
+      nginx:
+        listen_http: 8080
+    java:
+      jdk_version: '8'
+    nginx:
+      default_site_enabled: false
+- name: kibana7_nginx
+  run_list:
+    - 'recipe[netstat]'
+    - 'recipe[nginx]'
+    - 'recipe[java]'
+    - 'recipe[kibana]'
+    - 'recipe[kibana::nginx]'
+  attributes:
+    kibana:
+      version: 7
       base_dir: '/usr/share/kibana/'
       interface: '0.0.0.0'
       nginx:

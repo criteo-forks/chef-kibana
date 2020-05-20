@@ -15,8 +15,8 @@ group :vagrant do
   cookbook 'apache2'
   cookbook 'build-essential'
   cookbook 'elasticsearch', '~> 3.4'
-  cookbook 'java'
+  cookbook 'java', '~> 7.0'
   cookbook 'netstat'
   cookbook 'ohai'
-  cookbook 'nginx', '>= 7.0'
+  cookbook 'nginx', '~> 7.0'
 end
