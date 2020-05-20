@@ -9,6 +9,7 @@ group :test do
   # gem 'rake'
   # gem 'cookstyle'
   gem 'test-kitchen'
+  gem 'kitchen-inspec'
 end
 
 group :vagrant do
