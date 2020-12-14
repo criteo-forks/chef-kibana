@@ -2,9 +2,11 @@
 
 resource_name :kibana_plugin
 
+property :name, String, name_property: true
 property :url, String
+property :user, String, default: 'root'
 property :kibana_home, String, default: ::File.join(node['kibana']['base_dir'], 'current')
-property :plugins_registry, String, default: ::File.join(node['kibana']['base_dir'], 'installedPugins.json')
+property :plugins_registry, String, default: ::File.join(node['kibana']['base_dir'], 'current', 'installedPugins.json')
 
 default_action :nothing
 
@@ -17,7 +19,7 @@ load_current_value do
 end
 
 def plugin_exists?(name)
-  list_arg = node['kibana']['version'] > 4 ? 'bin/kibana-plugin list' : 'bin/kibana plugin -l'
+  list_arg = node['kibana']['version'] > 6 ? 'bin/kibana-plugin list --allow-root' : 'bin/kibana-plugin list'
   cmd_line = list_arg.to_s
   cmd = Mixlib::ShellOut.new(cmd_line, cwd: kibana_home)
   cmd.run_command
@@ -36,22 +38,24 @@ def update_plugin_reg(action)
 end
 
 action :install do
-  install_arg = node['kibana']['version'] > 4 ? "bin/kibana-plugin install #{url}" : "bin/kibana plugin -i #{name} -u #{url}"
+  install_arg = node['kibana']['version'] > 6 ? "bin/kibana-plugin install #{new_resource.url} --allow-root" : "bin/kibana-plugin install #{new_resource.url}"
   plugin_install = install_arg.to_s
   execute 'plugin-install' do
-    cwd kibana_home
+    cwd new_resource.kibana_home
     command plugin_install
+    user new_resource.user
     not_if { plugin_exists?(new_resource.name) }
   end
   update_plugin_reg('add')
 end
 
 action :remove do
-  remove_arg = node['kibana']['version'] > 4 ? "bin/kibana-plugin remove #{name}" : "bin/kibana plugin --remove #{name}"
+  remove_arg = node['kibana']['version'] > 6 ? "bin/kibana-plugin remove #{new_resource.name} --allow-root" : "bin/kibana-plugin remove #{new_resource.name}"
   plugin_remove = remove_arg.to_s
   execute 'plugin-remove' do
-    cwd kibana_home
+    cwd new_resource.kibana_home
     command plugin_remove
+    user new_resource.user
     only_if { plugin_exists?(new_resource.name) }
   end
   update_plugin_reg('remove')
@@ -59,15 +63,17 @@ end
 
 action :update do
   if new_resource.url != current_resource.url
-    kibana_plugin name do
+    kibana_plugin new_resource.name do
       action :remove
       kibana_home new_resource.kibana_home
+      user new_resource.user
       only_if { plugin_exists?(new_resource.name) }
     end
-    kibana_plugin name do
+    kibana_plugin new_resource.name do
       action :install
       url new_resource.url
       kibana_home new_resource.kibana_home
+      user new_resource.user
     end
   end
 end
